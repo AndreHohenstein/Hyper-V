@@ -14,3 +14,6 @@ sudo ./install.sh
 # Back to windows powershell on Hyper-V Host
 
 Set-VM -VMName "Your VM Name" -EnhancedSessionTransportType HvSocket
+
+# Wenn die Schriftgröße im Gast-OS zu klein ausfällt, dann kann man diese in einem Terminalfenster mit
+gsettings set org.gnome.desktop.interface text-scaling-factor 1.5
