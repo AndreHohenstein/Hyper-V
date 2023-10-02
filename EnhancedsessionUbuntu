@@ -1,0 +1,34 @@
+Damit unter der Basic Session die richtige Auflösung im Vollbildmodus genutzt werden kann, muss die Datei /etc/default/grub angepasst werden. Diese definiert die Einstellungen für Grub.
+
+Gehen Sie wie folgt vor:
+
+1.            Open Terminal
+
+2.            Type: sudo nano /etc/default/grub
+
+3.            Suchen Sie nach der Zeile, die mit GRUB_CMDLINE_LINUX_DEFAULT beginnt und fügen Sie folgendes hinzu: video=hyperv_fb:[Auflösung YYYYxZZZZ]. 
+
+Die Zeile sollte wie folgt aussehen um eine Bildschirmauflösung von 1680x1050 zu nutzen:
+
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash video=hyperv_fb:1680x1050"
+
+Danach speichern.
+
+4.            sudo update-grub
+
+5.            Reboot der VM
+
+Danach sollte in der Basic Session die richtige Auflösung genutzt werden.
+
+Step 6 - Vorbereitung für Enhanced Session Mode
+Damit unter Ubuntu der erweiterte Sitzungsmodus genutzt werden kann, müssen diverse Pakete nachinstalliert werden. Hierfür kann ein Script genutzt werden, das über GitHub heruntergeladen werden kann.
+
+#Download der Scripts von GitHub
+
+Öffnen Sie ein Terminal und geben Sie folgende Befehle ein:
+
+sudo apt-get update (Update der Paketlisten)
+
+sudo apt install git (Installation des git-Pakets für Download der Scripts)
+
+git clone https://github.com/jterry75/xrdp-init.git ~/xrdp-init (Download der Scripts für xrdp Installation)
