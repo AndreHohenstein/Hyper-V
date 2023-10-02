@@ -1,34 +1,68 @@
-Damit unter der Basic Session die richtige Auflösung im Vollbildmodus genutzt werden kann, muss die Datei /etc/default/grub angepasst werden. Diese definiert die Einstellungen für Grub.
+Credits
+# https://c-nergy.be/blog/?p=13655
+# https://askubuntu.com/questions/844245/how-to-compile-latest-pulseaudio-with-webrtc-in-ubuntu-16-04
+# https://askubuntu.com/questions/496549/error-you-must-put-some-source-uris-in-your-sources-list
+# https://unix.stackexchange.com/questions/65167/enable-udev-and-speex-support-for-pulseaudio
+# https://rudd-o.com/linux-and-free-software/how-to-make-pulseaudio-run-once-at-boot-for-all-your-users
+# https://gist.github.com/rkttu/35ecab5604c9ddc356b0af4644d5a226
 
-Gehen Sie wie folgt vor:
+# Installation and Enhanced session
+# follow steps on the post below, I installed Ubuntu 22.04 on a Windows 11 machine 
+# https://techbloggingfool.com/2020/12/26/deploy-a-linux-vm-on-hyper-v-with-sound-20-04-edition/
+# or do theses steps below
 
-1.            Open Terminal
+# Configure ubuntu for enhanced session
+# Note - if it asks to reboot and rerun, rerun the install.sh again
 
-2.            Type: sudo nano /etc/default/grub
+wget https://raw.githubusercontent.com/Hinara/linux-vm-tools/ubuntu20-04/ubuntu/20.04/install.sh
+chmod +x install.sh
+sudo ./install.sh
 
-3.            Suchen Sie nach der Zeile, die mit GRUB_CMDLINE_LINUX_DEFAULT beginnt und fügen Sie folgendes hinzu: video=hyperv_fb:[Auflösung YYYYxZZZZ]. 
+# Back to windows powershell
 
-Die Zeile sollte wie folgt aussehen um eine Bildschirmauflösung von 1680x1050 zu nutzen:
+Set-VM -VMName "Your VM Name" -EnhancedSessionTransportType HvSocket
 
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash video=hyperv_fb:1680x1050"
+# Audio with some updates
+# Install Some PreReqs
+sudo apt-get install git libpulse-dev autoconf m4 intltool build-essential dpkg-dev libtool libsndfile1-dev libspeexdsp-dev libudev-dev -y
 
-Danach speichern.
+# Enable source code as downloadable.(can also do this from the gui Settings > About > Software & Updates)
 
-4.            sudo update-grub
+sudo cp /etc/apt/sources.list /etc/apt/sources.list~
+sudo sed -Ei 's/^# deb-src /deb-src /' /etc/apt/sources.list
+sudo apt-get update
 
-5.            Reboot der VM
+#  Pulseaudio. Download pulseaudio source in /tmp directory - Do not forget to enable source repositories
 
-Danach sollte in der Basic Session die richtige Auflösung genutzt werden.
+sudo apt build-dep pulseaudio -y
+cd /tmp
+apt source pulseaudio
 
-Step 6 - Vorbereitung für Enhanced Session Mode
-Damit unter Ubuntu der erweiterte Sitzungsmodus genutzt werden kann, müssen diverse Pakete nachinstalliert werden. Hierfür kann ein Script genutzt werden, das über GitHub heruntergeladen werden kann.
+# Compile pulseaudio
+# go to the pulseaudio folder (pulseaudio-<version.number>) and build it from source, 
+# what I did is follow what's currently in the README file, on the section HACKING - currently the instructions are these
 
-#Download der Scripts von GitHub
+cd pulseaudio-<version.number>
+meson build
+meson compile -C build
+build/src/daemon/pulseaudio -n -F build/src/daemon/default.pa -p $(pwd)/build/src/
 
-Öffnen Sie ein Terminal und geben Sie folgende Befehle ein:
+# Create xrdp sound modules
+# go back to /tmp folder then clone
 
-sudo apt-get update (Update der Paketlisten)
+cd .. 
+git clone https://github.com/neutrinolabs/pulseaudio-module-xrdp.git
+cd pulseaudio-module-xrdp
 
-sudo apt install git (Installation des git-Pakets für Download der Scripts)
+# like the pulseaudio source, I followed their docs to get this done
+# https://github.com/neutrinolabs/pulseaudio-module-xrdp/wiki/Build-on-Debian-or-Ubuntu
 
-git clone https://github.com/jterry75/xrdp-init.git ~/xrdp-init (Download der Scripts für xrdp Installation)
+scripts/install_pulseaudio_sources_apt_wrapper.sh
+./bootstrap
+./configure PULSE_DIR=~/pulseaudio.src
+sudo make install
+
+# Restart Ubuntu, then the VM, hopefully it will all work for you as well. If it works...backup that VM, create a checkpoint :D
+# Note. I did not use autologin in Ubuntu, I think autologin could cause issues with regards to sound. 
+# I kinda guessed that from reading here https://github.com/neutrinolabs/pulseaudio-module-xrdp/wiki/README#install
+
